@@ -67,7 +67,7 @@ class Spokesman {
     echo $html;
   }
 
-  private static function checkImageUrl($item, $extra) {
+  private static function checkImageUrl($item, $extra = null) {
     $keys = array_merge(array('image', 'icon_path'), (array)$extra);
     foreach ($keys as $key) {
       if (isset($item[$key]) && !file_exists('../../' . $item[$key])) {
