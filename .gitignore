@@ -1,0 +1,7 @@
+# IDE
+.idea
+
+# connect
+pdo_read.php
+pdo_write.php
+memcache.php
