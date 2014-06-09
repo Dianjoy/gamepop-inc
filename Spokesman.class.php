@@ -9,14 +9,14 @@
  */
 
 class Spokesman {
-  public static function say($args) {
+  public static function say($args, $extra = null) {
     // 判断下是否需要给图片加绝对路径
     if (isset($args['list']) && is_array($args['list'])) {
       foreach ($args['list'] as $key => $item) {
         $args['list'][$key] = self::checkImageUrl($item);
       }
     }
-    $args = self::checkImageUrl($args);
+    $args = self::checkImageUrl($args, $extra);
     header("Content-Type:application/json;charset=UTF-8");
     exit(json_encode($args));
   }
@@ -67,17 +67,18 @@ class Spokesman {
     echo $html;
   }
 
-  private static function checkImageUrl($item) {
-    if (isset($item['image']) && !file_exists('../../' . $item['image'])) {
-      $item['image'] = self::addDomain($item['image']);
-    }
-    if (isset($item['icon_path']) && !file_exists('../../' . $item['icon_path'])) {
-      $item['icon_path'] = self::addDomain($item['icon_path']);
+  private static function checkImageUrl($item, $extra) {
+    $keys = array_merge(array('image', 'icon_path'), (array)$extra);
+    foreach ($keys as $key) {
+      if (isset($item[$key]) && !file_exists('../../' . $item[$key])) {
+        $item[$key] = self::addDomain($item[$key]);
+      }
     }
     return $item;
   }
   private static function addDomain($url) {
     $prefix = 'http://r.yxpopo.com/';
+    $url = preg_replace('/(\.\/)?upload\//', $prefix, $url);
     return strpos($url, $prefix) === false ? $prefix . $url : $url;
   }
 } 
