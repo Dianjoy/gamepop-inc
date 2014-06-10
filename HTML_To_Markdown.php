@@ -76,13 +76,16 @@ class HTML_To_Markdown
     {
         $html = preg_replace('~>\s+<~', '><', $html); // Strip white space between tags to prevent creation of empty #text nodes
 
+        if (strpos($html, '<meta') === false) {
+          $html = "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">" . $html;
+        }
         $this->document = new DOMDocument();
 
         if ($this->options['suppress_errors'])
             libxml_use_internal_errors(true); // Suppress conversion errors (from http://bit.ly/pCCRSX )
 
-        $this->document->loadHTML('<?xml encoding="UTF-8">' . $html); // Hack to load utf-8 HTML (from http://bit.ly/pVDyCt )
-        $this->document->encoding = 'UTF-8';
+
+        $this->document->loadHTML($html); // Hack to load utf-8 HTML (from http://bit.ly/pVDyCt )
 
         if ($this->options['suppress_errors'])
             libxml_clear_errors();

@@ -143,7 +143,10 @@ class SQLBuilder {
   }
   public function group($key, $table) {
     if ($key) {
-      $this->group_by = "\nGROUP BY " . ($table ? "$table." : "" ) . "`$key`";
+      if (!preg_match('/\([`\w_]+\)/', $key)) {
+        $key = "`$key`";
+      }
+      $this->group_by = "\nGROUP BY " . ($table ? "$table." : "" ) . "$key";
     }
     return $this;
   }
@@ -357,8 +360,8 @@ class Base {
     var_dump($this->sth->errorInfo());
   }
 
-  public function count($key = '', $table = '') {
-    return "COUNT(" . ($table ? "`$table`" : "") . ($key ? "`$key`" : "'X'") . ") AS NUM";
+  public function count($key = '', $table = '', $is_distinct = false) {
+    return "COUNT(" . ($is_distinct ? 'DISTINCT ' : '') . ($table ? "`$table`" : "") . ($key ? "`$key`" : "'X'") . ") AS NUM";
   }
 
   protected function getTable($fields) {

@@ -15,5 +15,7 @@ class Log extends \gamepop\Base {
     if ($field === self::$SEARCH) {
       return self::SEARCH;
     }
+
+    return self::SEARCH;
   }
 } 
