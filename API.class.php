@@ -17,6 +17,10 @@ class API {
     if ($request) {
       $attr = json_decode($request, true);
     }
+    // 去掉链接中的http://r.yxpopo.com/
+    foreach ($attr as $key => $value) {
+      $attr[$key] = str_replace('http://r.yxpopo.com/', '', $value);
+    }
 
     header("Content-Type:application/json;charset=utf-8");
     switch ($_SERVER['REQUEST_METHOD']) {
