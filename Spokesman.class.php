@@ -13,7 +13,7 @@ class Spokesman {
     // 判断下是否需要给图片加绝对路径
     if (isset($args['list']) && is_array($args['list'])) {
       foreach ($args['list'] as $key => $item) {
-        $args['list'][$key] = self::checkImageUrl($item);
+        $args['list'][$key] = self::checkImageUrl($item, $extra);
       }
     }
     $args = self::checkImageUrl($args, $extra);
@@ -21,8 +21,11 @@ class Spokesman {
     exit(json_encode($args));
   }
 
-  public static function judge($result, $success, $error, $args = null) {
+  public static function judge($result, $success, $error, $args = null, $extra = null) {
     header("Content-Type:application/json;charset=UTF-8");
+    if ($args) {
+      $args = self::checkImageUrl($args, $extra);
+    }
     if ($result) {
       echo json_encode(array_merge(array(
         'code' => 0,
@@ -33,7 +36,7 @@ class Spokesman {
       echo json_encode(array_merge(array(
         'code' => 1,
         'msg' => $error,
-      ), $args));
+      ), (array)$args));
     }
   }
 
