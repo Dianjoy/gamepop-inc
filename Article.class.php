@@ -40,6 +40,9 @@ class Article extends \gamepop\Base {
       if ($fields == self::$ALL || $fields == self::$DETAIL) {
         return self::TABLE . " LEFT JOIN " . self::CATEGORY . " ON " . self::TABLE . ".`category`=" . self::CATEGORY . ".`id`";
       }
+      if ($fields === self::$ALL_CATEGORY) {
+        return self::CATEGORY;
+      }
       if (strpos($fields, self::$ALL_CATEGORY) !== false) {
         return self::CATEGORY . " RIGHT JOIN " . self::TABLE . " ON " . self::TABLE . ".`category`=" . self::CATEGORY . ".`id`";
       }
