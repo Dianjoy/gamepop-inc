@@ -178,7 +178,9 @@ class HTML_To_Markdown
         $markdown = html_entity_decode($markdown, ENT_QUOTES, 'UTF-8'); // Double decode to cover cases like &amp;nbsp; http://www.php.net/manual/en/function.htmlentities.php#99984
         $markdown = preg_replace("/<!DOCTYPE [^>]+>/", "", $markdown); // Strip doctype declaration
         $unwanted = array('<html>', '</html>', '<body>', '</body>', '<head>', '</head>', '<?xml encoding="UTF-8">', '&#xD;');
+        $unwanted_reg = array('/<meta.*?>/');
         $markdown = str_replace($unwanted, '', $markdown); // Strip unwanted tags
+        $markdown = preg_replace($unwanted_reg, '', $markdown); // same with reg
         $markdown = trim($markdown, "\n\r\0\x0B");
 
         $this->output = $markdown;
