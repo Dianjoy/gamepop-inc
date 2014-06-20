@@ -75,6 +75,7 @@ class HTML_To_Markdown
     public function convert($html)
     {
         $html = preg_replace('~>\s+<~', '><', $html); // Strip white space between tags to prevent creation of empty #text nodes
+      $html = str_replace('　', '', $html); // 去除全角空格
 
         if (strpos($html, '<meta') === false) {
           $html = "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">" . $html;
