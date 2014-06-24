@@ -35,7 +35,7 @@ class memc {
    */
   function __construct($host, $port) {
     // 如果环境里没有memcache，则使用mock类，这样可以正常使用
-    if (defined('Memcache')) {
+    if (class_exists('Memcache')) {
       // 目前暂不考虑多个server的情况
       $this->mc = new Memcache;
       $this->mc->addserver($host, $port);
