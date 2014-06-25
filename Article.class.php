@@ -19,7 +19,8 @@ class Article extends \gamepop\Base {
 
   static $ALL = "`t_article`.`id`, `guide_name`, `category`, `label`, `source`,
     `topic`, `author`, `t_article`.`icon_path`, `pub_date`, `src_url`, `seq`, `remark`,
-    `update_time`, `update_editor`, `is_top`, `is_index`, `t_article`.`status`";
+    `update_time`, `update_editor`, `is_top`, `is_index`, `t_article`.`status`,
+    `content`";
   static $TOP = "`id`, `topic`, `update_time`, `seq`, `is_top`, `icon_path`, `source`, `author`";
   static $DETAIL = "`guide_name`, `category`, `label`, `source`,
     `topic`, `author`, `icon_path`, `content`, `remark`, `pub_date`, `src_url`,
