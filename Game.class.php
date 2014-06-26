@@ -15,6 +15,7 @@ class Game extends \gamepop\Base {
   const HOMEPAGE_NAV = '`t_article_category_image`';
   const OUTSIDE = '`o_game_user`';
   const TAGS = '`m_game_tags`';
+  const PACK = '`m_pack_guide`';
 
   const NORMAL = 0;
   const DELETED = 1;

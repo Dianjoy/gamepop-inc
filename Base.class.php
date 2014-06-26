@@ -17,6 +17,8 @@ class SQLBuilder {
   const INSERT = "INSERT INTO {{tables}}
     ({{fields}})
     VALUES ({{values}})";
+  const DELETE = "DELETE FROM {{tables}}
+    WHERE {{conditions}}";
 
   public $is_select = false;
   public $args = array();
@@ -86,6 +88,15 @@ class SQLBuilder {
     return $this;
   }
   public function into($table) {
+    $this->tables = $table;
+    return $this;
+  }
+  public function delete($table) {
+    $this->sql = null;
+    $this->is_select = false;
+    $this->template = self::DELETE;
+    $this->args = array();
+    $this->conditions = array();
     $this->tables = $table;
     return $this;
   }
@@ -279,6 +290,13 @@ class Base {
     self::init_write();
     $this->builder = new SQLBuilder(self::$WRITE);
     $this->builder->insert($args)->into($table ? $table : $this->getTable($args));
+    $this->sth = null;
+    return $this;
+  }
+  public function delete($table) {
+    self::init_write();
+    $this->builder = new SQLBuilder(self::$WRITE);
+    $this->builder->delete($table);
     $this->sth = null;
     return $this;
   }
