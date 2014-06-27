@@ -30,7 +30,7 @@ function result_without_parenthese($str) {
 function result_without_or($str) {
   $result = explode('&', $str);
   foreach ($result as $sub_str) {
-    if (!in_array($sub_str, $_SESSION['permission']) && $sub_str != 'true' || $sub_str == 'false') {
+    if (!is_array($_SESSION['permission']) || (!in_array($sub_str, $_SESSION['permission']) && $sub_str != 'true' || $sub_str == 'false')) {
       return 'false';
     }
   }

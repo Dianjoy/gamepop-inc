@@ -30,10 +30,45 @@ class Article extends \gamepop\Base {
   public function __construct($need_write = false, $need_cache = true, $is_debug = false) {
     parent::__construct($need_write, $need_cache, $is_debug);
   }
+
   // overrides parent's method
   public function search($keyword) {
     $this->builder->search('topic', $keyword);
     return $this;
+  }
+
+  public function add_category($label) {
+    $condition = array('label' => $label);
+    // 先判断是否存在
+    $id = $this->select('id')
+      ->where($condition)
+      ->fetch(PDO::FETCH_COLUMN);
+    if ($id) {
+      return $id;
+    }
+    // 不存在再创建
+    $id = $this->insert($condition)
+      ->execute()
+      ->lastInsertId();
+    return $id;
+  }
+
+  public function get_latest_fetched_article_number() {
+    require_once ("Game.class.php");
+    return $this->select($this->count())
+      ->where(array('status' => self::FETCHED), self::TABLE)
+      ->join(Game::TABLE, Game::ID, Game::ID, \gamepop\Base::RIGHT)
+      ->fetch(PDO::FETCH_COLUMN);
+  }
+
+  public function get_unknown_games() {
+    require_once ("Game.class.php");
+    return $this->select($this->count(Game::ID, self::TABLE), self::TABLE . '.' . Game::ID)
+      ->where(array('status' => self::FETCHED), self::TABLE)
+      ->having(array('NUM' => 10), \gamepop\Base::R_MORE_EQUAL)
+      ->join(Game::TABLE, Game::ID, Game::ID)
+      ->group(Game::ID)
+      ->fetchALL(PDO::FETCH_COLUMN);
   }
 
   protected function getTable($fields) {
@@ -56,32 +91,5 @@ class Article extends \gamepop\Base {
       }
     }
     return self::TABLE;
-  }
-
-  public function add_category($label) {
-    self::init_write();
-    $condition = array(
-      ':label' => $label,
-    );
-    // 先判断是否存在
-    $sql = "SELECT `id`
-            FROM " . self::CATEGORY . "
-            WHERE `label`=:label";
-    $sth = self::$READ->prepare($sql);
-    $sth->execute($condition);
-    $id = $sth->fetchColumn();
-    if ($id) {
-      return $id;
-    }
-    // 不存在再创建
-    $sql = "INSERT INTO " . self::CATEGORY . "
-            (`label`)
-            VALUES (:label)";
-    $sth = self::$WRITE->prepare($sql);
-    $check = $sth->execute($condition);
-    if ($check) {
-      return self::$WRITE->lastInsertId();
-    }
-    return $check;
   }
 } 

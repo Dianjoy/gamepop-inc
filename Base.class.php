@@ -10,7 +10,8 @@ namespace gamepop;
 class SQLBuilder {
   const SELECT = "SELECT {{fields}}
     FROM {{tables}}
-    WHERE {{conditions}}";
+    WHERE {{conditions}}
+    {{havings}}";
   const UPDATE = "UPDATE {{tables}}
     SET {{fields}}
     WHERE {{conditions}}";
@@ -26,6 +27,7 @@ class SQLBuilder {
   private $fields;
   private $tables;
   private $conditions = array();
+  private $havings = array();
   private $key_dict = array();
   private $order_sql = '';
   private $group_by = '';
@@ -100,45 +102,15 @@ class SQLBuilder {
     $this->tables = $table;
     return $this;
   }
-  /**
-   * 用来生成sql中的条件，可以使用多次，后面的条件会覆盖前面的同名条件
-   * `key` in (value1, value2 ...) 类型的sql，在prepare的时候，必须对每个值创建单独的占位符
-   * @param array $args
-   * @param string $table 条件属于哪个表
-   * @param bool $relation key与值的关系
-   * @param bool $is_or 是or还是and
-   */
+  public function join($table, $from, $to, $dir) {
+    $this->tables = $this->tables . " $dir JOIN $table ON " . $this->tables . ".`$from` = $table.`$to`\n";
+    return $this;
+  }
   public function where($args, $table = '', $relation = '=', $is_or = false) {
-    $conditions = array();
-    $values = array();
-    foreach ($args as $key => $value) {
-      if ($value === null) {
-        continue;
-      }
-      $value_key = $this->strip($key);
-      if (is_array($value)) {
-        $keys = array();
-        $count = 0;
-        $value = array_unique($value);
-        foreach ($value as $single) {
-          $keys[] = ":{$value_key}_{$count}";
-          $values[":{$value_key}_{$count}"] = $single;
-          $count++;
-        }
-        $keys = implode(",", $keys);
-        $conditions[] = $this->strip_multi_accent("`$key` $relation ($keys)");
-      } else if ($relation === Base::R_IS || $relation === Base::R_IS_NOT) {
-        $conditions[] = $this->strip_multi_accent(($table ? "`$table`." : "") . "`$key` $relation NULL");
-      } else {
-        $conditions[] = $this->strip_multi_accent(($table ? "`$table`." : "") . "`$key`$relation:$value_key");
-        $values[':' . $value_key] = $value;
-      }
-    }
-    if (count($conditions) === 0) {
-      return;
-    }
-    $this->args = array_merge($this->args, $values);
-    $this->conditions[] = array($is_or, $conditions);
+    $this->parse_args($args, $table, $relation, $is_or);
+  }
+  public function having($args, $relation = '=', $is_or = false) {
+    $this->parse_args($args, '', $relation, $is_or, false);
   }
   public function search($key, $query, $is_or = false) {
     if (!$query) {
@@ -157,7 +129,7 @@ class SQLBuilder {
       if (!preg_match('/\([`\w_]+\)/', $key)) {
         $key = "`$key`";
       }
-      $this->group_by = "\nGROUP BY " . ($table ? "$table." : "" ) . "$key";
+      $this->group_by = "\nGROUP BY " . ($table ? "$table." : "" ) . "$key\n";
     }
     return $this;
   }
@@ -170,18 +142,14 @@ class SQLBuilder {
     }
     // 三大件
     $sql = preg_replace_callback($this->reg, function ($matches) {
+
       switch ($matches[1]) {
         case 'conditions':
           if (!$this->conditions) {
             return 1;
           }
           foreach ($this->conditions as $key => $conditions) {
-            $is_or = $conditions[0];
-            $connect = $is_or ? ' OR ' : ' AND ';
-            $conditions = $conditions[1];
-            $conditions = is_array($conditions) ? implode(" $connect ", $conditions) : $conditions;
-            $conditions = $is_or ? "($conditions)" : $conditions;
-            $this->conditions[$key] = $conditions;
+            $this->conditions[$key] = $this->get_condition_string($conditions);
           }
           return implode(' AND ', $this->conditions);
           break;
@@ -203,10 +171,75 @@ class SQLBuilder {
           break;
       }
     }, $this->template);
-    $this->sql = $sql . $this->order_sql . $this->group_by . $this->limit;
+    if (count($this->havings) > 0){
+      foreach ($this->havings as $key => $conditions) {
+        $this->havings[$key] = $this->get_condition_string($conditions);
+      }
+      $this->havings = 'HAVING ' . implode(' AND ', $this->havings);
+    } else{
+      $this->havings = '';
+    }
+    $this->sql = $sql . $this->order_sql . $this->group_by . $this->havings . $this->limit;
+    $this->sql = $this->strip_multi_accent($this->sql);
     return $this->sql;
   }
 
+  /**
+   * @param $conditions
+   * @return string
+   */
+  function get_condition_string($conditions) {
+    $is_or = $conditions[0];
+    $connect = $is_or ? ' OR ' : ' AND ';
+    $conditions = $conditions[1];
+    $conditions = is_array($conditions) ? implode(" $connect ", $conditions) : $conditions;
+    $conditions = $is_or ? "($conditions)" : $conditions;
+    return $conditions;
+  }
+  /**
+   * 用来生成sql中的条件，可以使用多次，后面的条件会覆盖前面的同名条件
+   * `key` in (value1, value2 ...) 类型的sql，在prepare的时候，必须对每个值创建单独的占位符
+   * @param array $args
+   * @param string $table 条件属于哪个表
+   * @param bool $relation key与值的关系
+   * @param bool $is_or 是or还是and
+   */
+  private function parse_args($args, $table, $relation = '=', $is_or = false, $is_where = true) {
+    $conditions = array();
+    $values = array();
+    foreach ($args as $key => $value) {
+      if ($value === null) {
+        continue;
+      }
+      $value_key = $this->strip($key);
+      if (is_array($value)) {
+        $keys = array();
+        $count = 0;
+        $value = array_unique($value);
+        foreach ($value as $single) {
+          $keys[] = ":{$value_key}_{$count}";
+          $values[":{$value_key}_{$count}"] = $single;
+          $count++;
+        }
+        $keys = implode(",", $keys);
+        $conditions[] = "`$key` $relation ($keys)";
+      } else if ($relation === Base::R_IS || $relation === Base::R_IS_NOT) {
+        $conditions[] = ($table ? "`$table`." : "") . "`$key` $relation NULL";
+      } else {
+        $conditions[] = ($table ? "`$table`." : "") . "`$key`$relation:$value_key";
+        $values[':' . $value_key] = $value;
+      }
+    }
+    if (count($conditions) === 0) {
+      return;
+    }
+    $this->args = array_merge($this->args, $values);
+    if ($is_where) {
+      $this->conditions[] = array($is_or, $conditions);
+    } else {
+      $this->havings[] = array($is_or, $conditions);
+    }
+  }
   private function strip_multi_accent($string) {
     return preg_replace('/`{2,}/', '`', $string);
   }
@@ -239,6 +272,9 @@ class Base {
   const R_LESS_EQUAL = '<=';
   const R_MORE = '>';
   const R_MORE_EQUAL = '>=';
+
+  const LEFT = 'LEFT';
+  const RIGHT = 'RIGHT';
 
   protected $builder;
   protected $sth;
@@ -304,6 +340,10 @@ class Base {
     $this->builder->where($args, $table, $relation, $is_or);
     return $this;
   }
+  public function having($args, $relation = '=', $is_or = false) {
+    $this->builder->having($args, $relation, $is_or);
+    return $this;
+  }
   public function search($keyword) {
     $this->builder->search($keyword);
     return $this;
@@ -318,6 +358,10 @@ class Base {
   }
   public function limit($start, $length) {
     $this->builder->limit($start, $length);
+    return $this;
+  }
+  public function join($table, $from, $to, $dir = 'LEFT') {
+    $this->builder->join($table, $from, $to, $dir);
     return $this;
   }
   public function execute($debug = false) {
@@ -379,7 +423,7 @@ class Base {
   }
 
   public function count($key = '', $table = '', $is_distinct = false) {
-    return "COUNT(" . ($is_distinct ? 'DISTINCT ' : '') . ($table ? "`$table`" : "") . ($key ? "`$key`" : "'X'") . ") AS NUM";
+    return "COUNT(" . ($is_distinct ? 'DISTINCT(' : '') . ($table ? "`$table`." : "") . ($key ? "`$key`" : "'X'") . ($is_distinct ? ')' : '') . ") AS NUM";
   }
 
   protected function getTable($fields) {
