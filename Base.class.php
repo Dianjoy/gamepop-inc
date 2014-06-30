@@ -315,6 +315,13 @@ class Base {
     $this->sth = null;
     return $this;
   }
+
+  /**
+   * 更新数据
+   * @param array $args 下标对应表的字段，值对应值
+   * @param string $table 目标表格
+   * @return $this
+   */
   public function update($args, $table = '') {
     self::init_write();
     $this->builder = new SQLBuilder(self::$WRITE);
@@ -322,6 +329,13 @@ class Base {
     $this->sth = null;
     return $this;
   }
+
+  /**
+   * 插入一条数据
+   * @param array $args 下标对应字段，值对应值
+   * @param string $table 目标表格
+   * @return $this
+   */
   public function insert($args, $table = '') {
     self::init_write();
     $this->builder = new SQLBuilder(self::$WRITE);
@@ -357,7 +371,9 @@ class Base {
     return $this;
   }
   public function limit($start, $length) {
-    $this->builder->limit($start, $length);
+    if ($length > 0) {
+      $this->builder->limit($start, $length);
+    }
     return $this;
   }
   public function join($table, $from, $to, $dir = 'LEFT') {

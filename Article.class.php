@@ -65,10 +65,11 @@ class Article extends \gamepop\Base {
     require_once ("Game.class.php");
     return $this->select($this->count(Game::ID, self::TABLE), self::TABLE . '.' . Game::ID)
       ->where(array('status' => self::FETCHED), self::TABLE)
+      ->where(array(Game::ID => 'NULL'), Game::TABLE, \gamepop\Base::R_IS)
       ->having(array('NUM' => 10), \gamepop\Base::R_MORE_EQUAL)
       ->join(Game::TABLE, Game::ID, Game::ID)
       ->group(Game::ID)
-      ->fetchALL(PDO::FETCH_COLUMN);
+      ->fetchALL(PDO::FETCH_ASSOC);
   }
 
   protected function getTable($fields) {
