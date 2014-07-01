@@ -13,11 +13,12 @@ class App extends \gamepop\Base {
   const NORMAL = 0;
 
   static $HOMEPAGE = '`id`, `guide_name`, `big_pic`, `logo`, `logo_width`,
-   `create_time`, `online_time`, `seq`, `status`';
+    `create_time`, `online_time`, `seq`, `status`';
 
   protected function getTable($field = '') {
     if ($field === self::$HOMEPAGE) {
       return self::HOMEPAGE;
     }
+    return self::HOMEPAGE;
   }
 } 
