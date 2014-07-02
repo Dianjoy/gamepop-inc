@@ -28,8 +28,8 @@ class SQLBuilder {
   private $tables;
   private $conditions = array();
   private $havings = array();
+  private $orders = array();
   private $key_dict = array();
-  private $order_sql = '';
   private $group_by = '';
   private $limit = '';
   private $template = '';
@@ -45,8 +45,6 @@ class SQLBuilder {
     $this->is_select = true;
     $this->template = self::SELECT;
     $this->fields = $fields;
-    $this->conditions = array();
-    $this->args = array();
     return $this;
   }
   public function from($table) {
@@ -72,6 +70,7 @@ class SQLBuilder {
     $this->tables = $table;
     return $this;
   }
+  // --> 生成insert
   public function insert($args) {
     $keys = array();
     $values = array();
@@ -93,12 +92,11 @@ class SQLBuilder {
     $this->tables = $table;
     return $this;
   }
+  // --> 生成delete
   public function delete($table) {
     $this->sql = null;
     $this->is_select = false;
     $this->template = self::DELETE;
-    $this->args = array();
-    $this->conditions = array();
     $this->tables = $table;
     return $this;
   }
@@ -121,7 +119,7 @@ class SQLBuilder {
     return $this;
   }
   public function order($key, $order = "DESC") {
-    $this->order_sql = "\nORDER BY $key $order";
+    $this->orders[] = "$key $order";
     return $this;
   }
   public function group($key, $table) {
@@ -171,6 +169,7 @@ class SQLBuilder {
           break;
       }
     }, $this->template);
+    // havings
     if (count($this->havings) > 0){
       foreach ($this->havings as $key => $conditions) {
         $this->havings[$key] = $this->get_condition_string($conditions);
@@ -179,7 +178,12 @@ class SQLBuilder {
     } else{
       $this->havings = '';
     }
-    $this->sql = $sql . $this->order_sql . $this->group_by . $this->havings . $this->limit;
+    // orders
+    $order_sql = '';
+    if (count($this->orders) > 0) {
+      $order_sql = "\nORDER BY " . implode(', ', $this->orders);
+    }
+    $this->sql = $sql . $order_sql . $this->group_by . $this->havings . $this->limit;
     $this->sql = $this->strip_multi_accent($this->sql);
     return $this->sql;
   }
@@ -309,13 +313,12 @@ class Base {
 
   public function select() {
     $vars = func_get_args();
-    $fields = implode(",", $vars);
+    $fields = implode(",", array_filter($vars));
     $this->builder = new SQLBuilder(self::$READ);
     $this->builder->select($fields)->from($this->getTable($fields));
     $this->sth = null;
     return $this;
   }
-
   /**
    * 更新数据
    * @param array $args 下标对应表的字段，值对应值

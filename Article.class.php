@@ -74,7 +74,7 @@ class Article extends \gamepop\Base {
 
   protected function getTable($fields) {
     if (is_string($fields)) {
-      if ($fields == self::$ALL || $fields == self::$DETAIL) {
+      if (strpos($fields, self::$ALL) !== false || strpos($fields, self::$DETAIL) !== false) {
         return self::TABLE . " LEFT JOIN " . self::CATEGORY . " ON " . self::TABLE . ".`category`=" . self::CATEGORY . ".`id`";
       }
       if ($fields === self::$ALL_CATEGORY) {
