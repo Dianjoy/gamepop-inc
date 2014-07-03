@@ -8,7 +8,7 @@
 function array_omit($array) {
   $args = array_slice(func_get_args(), 1);
   foreach ($args as $key) {
-    if (isset($array[$key])) {
+    if (array_key_exists($key, $array)) {
       unset($array[$key]);
     }
   }
