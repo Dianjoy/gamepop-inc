@@ -17,8 +17,10 @@ class Game extends \gamepop\Base {
   const TAGS = '`m_game_tags`';
   const PACK = '`m_pack_guide`';
 
+  // t_game.status
   const NORMAL = 0;
   const DELETED = 1;
+  const FETCHED = 3;
 
   const ID = 'guide_name';
 
