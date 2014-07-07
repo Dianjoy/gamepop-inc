@@ -14,3 +14,14 @@ function array_omit($array) {
   }
   return $array;
 }
+
+function array_pic($array) {
+  $args = array_slice(func_get_args(), 1);
+  $result = array();
+  foreach ($array as $key => $value) {
+    if (in_array($key, $args)) {
+      $result[$key] = $value;
+    }
+  }
+  return $array;
+}
