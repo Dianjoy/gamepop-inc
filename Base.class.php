@@ -135,12 +135,15 @@ class SQLBuilder {
     $this->limit = "\nLIMIT $start,$length";
   }
   public function output() {
+    // 如果update和delete欠缺条件，就直接抛出异常
+    if (preg_match('/update|delete/i', $this->template) && count($this->conditions) == 0) {
+      throw new \Exception('UPDATE/DELETE but no where conditions.');
+    }
     if ($this->sql) {
       return $this->sql;
     }
-    // 三大件
+    // 四大件
     $sql = preg_replace_callback($this->reg, function ($matches) {
-
       switch ($matches[1]) {
         case 'conditions':
           if (!$this->conditions) {
@@ -207,6 +210,7 @@ class SQLBuilder {
    * @param string $table 条件属于哪个表
    * @param bool $relation key与值的关系
    * @param bool $is_or 是or还是and
+   * @param bool $is_where 存在于where里还是having里
    */
   private function parse_args($args, $table, $relation = '=', $is_or = false, $is_where = true) {
     $conditions = array();
@@ -216,6 +220,12 @@ class SQLBuilder {
         continue;
       }
       $value_key = $this->strip($key);
+      $index = 0;
+      // 如果已经有了这个key，则向后找一个
+      while (array_key_exists(":$value_key", $this->args)) {
+        $value_key .= "_{$index}";
+        $index++;
+      }
       if (is_array($value)) {
         $keys = array();
         $count = 0;
