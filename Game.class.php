@@ -25,10 +25,12 @@ class Game extends \gamepop\Base {
   const ID = 'guide_name';
 
   static $ALL = "`guide_name`, `game_name`, `game_desc`, `update_time`, `icon_path`,
-   `os_android`, `os_ios`, `update_time`, `hot`, `tags`";
+   `os_android`, `os_ios`, `hot`, `tags`";
   static $SLIDE = "`id`, `image`, `link`, `seq`";
   static $HOMEPAGE_NAV = "`category`, `id`, `guide_name`, `image`, `seq`, `status`, `order_by`";
   static $OUTSIDE = "`id`, `guide_name`, `user_id`, `score`";
+  static $LATEST = "`t_game`.`guide_name`, `game_name`, `game_desc`, `t_game`.`icon_path`,
+   `os_android`, `os_ios`";
   static $TAGS = "`id`, `tag`";
 
   static $ORDER_HOT = "hot";
