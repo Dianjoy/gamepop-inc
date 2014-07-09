@@ -213,6 +213,9 @@ class SQLBuilder {
    * @param bool $is_where 存在于where里还是having里
    */
   private function parse_args($args, $table, $relation = '=', $is_or = false, $is_where = true) {
+    if (!is_array($args)) {
+      return;
+    }
     $conditions = array();
     $values = array();
     foreach ($args as $key => $value) {
