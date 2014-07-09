@@ -101,7 +101,7 @@ class SQLBuilder {
     return $this;
   }
   public function join($table, $from, $to, $dir) {
-    $this->tables = $this->tables . " $dir JOIN $table ON " . $this->tables . ".`$from` = $table.`$to`\n";
+    $this->tables = $this->tables . " $dir JOIN $table ON " . $this->tables . ".`$from` = $table.`$to`";
     return $this;
   }
   public function where($args, $table = '', $relation = '=', $is_or = false) {
@@ -127,12 +127,12 @@ class SQLBuilder {
       if (!preg_match('/\([`\w_]+\)/', $key)) {
         $key = "`$key`";
       }
-      $this->group_by = "\nGROUP BY " . ($table ? "$table." : "" ) . "$key\n";
+      $this->group_by = "GROUP BY " . ($table ? "$table." : "" ) . "$key\n";
     }
     return $this;
   }
   public function limit($start, $length) {
-    $this->limit = "\nLIMIT $start,$length";
+    $this->limit = "LIMIT $start,$length";
   }
   public function output() {
     // 如果update和delete欠缺条件，就直接抛出异常
@@ -184,9 +184,9 @@ class SQLBuilder {
     // orders
     $order_sql = '';
     if (count($this->orders) > 0) {
-      $order_sql = "\nORDER BY " . implode(', ', $this->orders);
+      $order_sql = "ORDER BY " . implode(', ', $this->orders) . "\n";
     }
-    $this->sql = $sql . $order_sql . $this->group_by . $this->havings . $this->limit;
+    $this->sql = $sql . $this->group_by . $order_sql . $this->havings . $this->limit;
     $this->sql = $this->strip_multi_accent($this->sql);
     return $this->sql;
   }
@@ -239,7 +239,7 @@ class SQLBuilder {
           $count++;
         }
         $keys = implode(",", $keys);
-        $conditions[] = "`$key` $relation ($keys)";
+        $conditions[] = ($table ? "`$table`." : "") . "`$key` $relation ($keys)";
       } else if ($relation === Base::R_IS || $relation === Base::R_IS_NOT) {
         $conditions[] = ($table ? "`$table`." : "") . "`$key` $relation NULL";
       } else {
