@@ -15,7 +15,7 @@ function array_omit($array) {
   return $array;
 }
 
-function array_pic($array) {
+function array_pick($array) {
   $args = array_slice(func_get_args(), 1);
   $result = array();
   foreach ($array as $key => $value) {
@@ -23,5 +23,5 @@ function array_pic($array) {
       $result[$key] = $value;
     }
   }
-  return $array;
+  return $result;
 }
