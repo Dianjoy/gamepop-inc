@@ -294,11 +294,14 @@ class Base {
   const RIGHT = 'RIGHT';
 
   protected $builder;
+  protected $sql;
   protected $sth;
   protected $result;
   protected $cache;
   protected $is_debug;
   protected $has_cache;
+  protected $union;
+  protected $union_args;
 
   public function __construct($need_write = false, $need_cache = true, $is_debug = false) {
     $this->is_debug = $is_debug;
@@ -396,32 +399,41 @@ class Base {
     $this->builder->join($table, $from, $to, $dir);
     return $this;
   }
+  public function union() {
+    if (!$this->union) {
+      $this->union = array();
+      $this->union_args = array();
+    }
+    $this->union[] = $this->builder->output();
+    $this->union_args[] = $this->builder->args;
+    $this->builder = null;
+  }
   public function execute($debug = false) {
+    // 如果是union的话，执行联查的函数
+    if ($this->union) {
+      $this->execute_union($debug);
+      return $this;
+    }
     $sql = $this->builder->output();
-    if ($debug) {
-      var_dump($sql);
-    }
-    // 读取缓存
-    if ($this->has_cache && $this->builder->is_select) {
-      $cache = self::$MEMCACHE->get($this->getCacheKey($sql));
-      if ($cache) {
-        $this->cache = $cache;
-        return $this;
-      }
-    }
-
-    $this->sth = $this->builder->is_select ? self::$READ->prepare($sql) : self::$WRITE->prepare($sql);
-    try {
-      $this->result = $this->sth->execute($this->builder->args);
-    } catch (\Exception $e) {
-      var_dump($this->sth->errorInfo);
-      var_dump($e->getMessage());
-    }
-
-    if ($this->is_debug || $debug) {
-      var_dump($this->builder->args);
-    }
+    $args = $this->builder->args;
+    $this->_execute($sql, $args, $this->builder->is_select, $debug);
     return $this;
+  }
+  public function execute_union($debug = false) {
+    // 更新所有的脚标
+    $all_args = array();
+    foreach ($this->union_args as $index => $args) {
+      $sql = $this->union[$index];
+      $moved = array();
+      foreach ($args as $key => $value) {
+        $moved["{$key}_{$index}"] = $value;
+        $sql = str_replace($key, "{$key}_{$index}", $sql);
+      }
+      $this->union[$index] = $sql;
+      $all_args = array_merge($all_args, $moved);
+    }
+    $sql = implode("\nUNION\n", $this->union);
+    $this->_execute($sql, $all_args, true, $debug);
   }
   public function fetch($method, $is_all = false) {
     if (!$this->sth) {
@@ -439,8 +451,7 @@ class Base {
       $this->debug_info();
     }
     if ($this->has_cache) {
-      $sql = $this->builder->output();
-      self::$MEMCACHE->set($this->getCacheKey($sql), $result);
+      self::$MEMCACHE->set($this->getCacheKey($this->sql), $result);
     }
     return $result;
   }
@@ -456,6 +467,33 @@ class Base {
 
   public function count($key = '', $table = '', $is_distinct = false) {
     return "COUNT(" . ($is_distinct ? 'DISTINCT(' : '') . ($table ? "`$table`." : "") . ($key ? "`$key`" : "'X'") . ($is_distinct ? ')' : '') . ") AS NUM";
+  }
+
+  protected function _execute($sql, $args, $is_select, $debug) {
+    if ($debug) {
+      var_dump($sql);
+    }
+    // 读取缓存
+    if ($this->has_cache && $this->builder->is_select) {
+      $cache = self::$MEMCACHE->get($this->getCacheKey($sql));
+      if ($cache) {
+        $this->cache = $cache;
+        return $this;
+      }
+    }
+
+    $this->sql = $sql;
+    $this->sth = $is_select ? self::$READ->prepare($sql) : self::$WRITE->prepare($sql);
+    try {
+      $this->result = $this->sth->execute($args);
+    } catch (\Exception $e) {
+      var_dump($this->sth->errorInfo);
+      var_dump($e->getMessage());
+    }
+
+    if ($this->is_debug || $debug) {
+      var_dump($args);
+    }
   }
 
   protected function getTable($fields) {
