@@ -61,7 +61,7 @@ class Article extends \gamepop\Base {
       ->fetch(PDO::FETCH_COLUMN);
   }
 
-  public function get_unknown_games($keyword) {
+  public function get_unknown_games($keyword = '') {
     require_once ("Game.class.php");
     return $this->select($this->count(), self::TABLE . '.' . Game::ID)
       ->where(array('status' => self::FETCHED), self::TABLE)
