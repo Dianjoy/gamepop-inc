@@ -222,14 +222,16 @@ class SQLBuilder {
       if ($value === null) {
         continue;
       }
-      $value_key = $this->strip($key);
+      $value_key = $new_key = $this->strip($key);
       $index = 0;
-      // 如果已经有了这个key，则向后找一个
       while (array_key_exists(":$value_key", $this->args)) {
-        $value_key .= "_{$index}";
+        $value_key = "{$new_key}_{$index}";
         $index++;
       }
       if (is_array($value)) {
+        if (count($value) == 0) {
+          continue;
+        }
         $keys = array();
         $count = 0;
         $value = array_unique($value);
@@ -261,14 +263,7 @@ class SQLBuilder {
     return preg_replace('/`{2,}/', '`', $string);
   }
   private function strip($string) {
-    $key = preg_replace('/[`\.]/', '', $string);
-    $count = 0;
-    while (in_array($key, $this->key_dict)) {
-      $key = $key . $count;
-      $count++;
-    }
-    $this->key_dict[] = $key;
-    return $key;
+    return preg_replace('/[`\.]+/', '', $string);
   }
 }
 
@@ -426,13 +421,13 @@ class Base {
       $sql = $this->union[$index];
       $moved = array();
       foreach ($args as $key => $value) {
-        $moved["{$key}_{$index}"] = $value;
-        $sql = str_replace($key, "{$key}_{$index}", $sql);
+        $moved["{$key}__{$index}"] = $value;
+        $sql = preg_replace("/$key(?!_)/", "{$key}__{$index}", $sql);
       }
       $this->union[$index] = $sql;
       $all_args = array_merge($all_args, $moved);
     }
-    $sql = implode("\nUNION\n", $this->union);
+    $sql = implode("UNION\n", $this->union);
     $this->_execute($sql, $all_args, true, $debug);
   }
   public function fetch($method, $is_all = false) {
