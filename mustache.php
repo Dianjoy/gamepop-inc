@@ -10,7 +10,7 @@
  */
 class Mustache_Engine
 {
-    const VERSION        = '2.6.0';
+    const VERSION        = '2.6.1';
     const SPEC_VERSION   = '1.1.2';
     const PRAGMA_FILTERS = 'FILTERS';
         private $templates = array();
@@ -86,7 +86,7 @@ class Mustache_Engine
     }
     public function getEntityFlags()
     {
-      return $this->entityFlags;
+        return $this->entityFlags;
     }
     public function getCharset()
     {
@@ -757,7 +757,7 @@ class Mustache_Context
     {
         for ($i = count($stack) - 1; $i >= 0; $i--) {
             if (is_object($stack[$i]) && !($stack[$i] instanceof Closure)) {
-                if (method_exists($stack[$i], $id)) {
+                                                if (method_exists($stack[$i], $id)) {
                     return $stack[$i]->$id();
                 } elseif (isset($stack[$i]->$id)) {
                     return $stack[$i]->$id;
@@ -840,13 +840,14 @@ class Mustache_HelperCollection
     private $helpers = array();
     public function __construct($helpers = null)
     {
-        if ($helpers !== null) {
-            if (!is_array($helpers) && !$helpers instanceof Traversable) {
-                throw new Mustache_Exception_InvalidArgumentException('HelperCollection constructor expects an array of helpers');
-            }
-            foreach ($helpers as $name => $helper) {
-                $this->add($name, $helper);
-            }
+        if ($helpers === null) {
+            return;
+        }
+        if (!is_array($helpers) && !$helpers instanceof Traversable) {
+            throw new Mustache_Exception_InvalidArgumentException('HelperCollection constructor expects an array of helpers');
+        }
+        foreach ($helpers as $name => $helper) {
+            $this->add($name, $helper);
         }
     }
     public function __set($name, $helper)
@@ -1454,7 +1455,7 @@ class Mustache_Tokenizer
                     } else {
                         $char = $text[$i];
                         $this->buffer .= $char;
-                        if ($char == "\n") {
+                        if ($char === "\n") {
                             $this->flushBuffer();
                             $this->line++;
                         }
@@ -1486,27 +1487,44 @@ class Mustache_Tokenizer
                     break;
                 default:
                     if ($this->tagChange($this->ctag, $this->ctagLen, $text, $i)) {
-                        $this->tokens[] = array(
+                        $token = array(
                             self::TYPE  => $this->tagType,
                             self::NAME  => trim($this->buffer),
                             self::OTAG  => $this->otag,
                             self::CTAG  => $this->ctag,
                             self::LINE  => $this->line,
-                            self::INDEX => ($this->tagType == self::T_END_SECTION) ? $this->seenTag - $this->otagLen : $i + $this->ctagLen
+                            self::INDEX => ($this->tagType === self::T_END_SECTION) ? $this->seenTag - $this->otagLen : $i + $this->ctagLen
                         );
-                        $this->buffer = '';
-                        $i += $this->ctagLen - 1;
-                        $this->state = self::IN_TEXT;
-                        if ($this->tagType == self::T_UNESCAPED) {
-                            if ($this->ctag == '}}') {
-                                $i++;
+                        if ($this->tagType === self::T_UNESCAPED) {
+                                                        if ($this->ctag === '}}') {
+                                if (($i + 2 < $len) && $text[$i + 2] === '}') {
+                                    $i++;
+                                } else {
+                                    $msg = sprintf(
+                                        'Mismatched tag delimiters: %s on line %d',
+                                        $token[self::NAME],
+                                        $token[self::LINE]
+                                    );
+                                    throw new Mustache_Exception_SyntaxException($msg, $token);
+                                }
                             } else {
-                                                                $lastName = $this->tokens[count($this->tokens) - 1][self::NAME];
+                                $lastName = $token[self::NAME];
                                 if (substr($lastName, -1) === '}') {
-                                    $this->tokens[count($this->tokens) - 1][self::NAME] = trim(substr($lastName, 0, -1));
+                                    $token[self::NAME] = trim(substr($lastName, 0, -1));
+                                } else {
+                                    $msg = sprintf(
+                                        'Mismatched tag delimiters: %s on line %d',
+                                        $token[self::NAME],
+                                        $token[self::LINE]
+                                    );
+                                    throw new Mustache_Exception_SyntaxException($msg, $token);
                                 }
                             }
                         }
+                        $this->buffer = '';
+                        $i += $this->ctagLen - 1;
+                        $this->state = self::IN_TEXT;
+                        $this->tokens[] = $token;
                     } else {
                         $this->buffer .= $text[$i];
                     }
