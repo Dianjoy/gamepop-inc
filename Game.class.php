@@ -39,8 +39,12 @@ class Game extends \gamepop\Base {
     parent::__construct($need_write, $need_cache, $is_debug);
   }
 
-  public function search($keyword) {
-    $this->builder->search('game_name', $keyword);
+  public function search($args, $is_or = false) {
+    if (is_array($args)) {
+      $this->builder->search($args, $is_or);
+    } else {
+      $this->builder->search('game_name', $args);
+    }
     return $this;
   }
   protected function getTable($fields) {
