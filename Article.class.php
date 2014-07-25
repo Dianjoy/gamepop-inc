@@ -46,6 +46,7 @@ class Article extends \gamepop\Base {
     $condition = array('label' => $label);
     // 先判断是否存在
     $id = $this->select('id')
+      ->from(self::CATEGORY)
       ->where($condition)
       ->fetch(PDO::FETCH_COLUMN);
     if ($id) {
@@ -69,7 +70,7 @@ class Article extends \gamepop\Base {
   public function get_unknown_games($keyword = '') {
     require_once ("Game.class.php");
     return $this->select($this->count(), self::TABLE . '.' . Game::ID)
-      ->where(array('status' => self::FETCHED), self::TABLE)
+      ->where(array('statcus' => self::FETCHED), self::TABLE)
       ->where(array(Game::ID => 'NULL'), Game::TABLE, \gamepop\Base::R_IS)
       ->search($keyword)
       ->having(array('NUM' => 1), \gamepop\Base::R_MORE_EQUAL)

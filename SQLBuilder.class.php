@@ -18,11 +18,12 @@ class SQLBuilder {
     WHERE {{conditions}}";
   const INSERT = "INSERT INTO {{tables}}
     ({{fields}})
-    VALUES ({{values}})";
+    VALUES {{values}}";
   const DELETE = "DELETE FROM {{tables}}
     WHERE {{conditions}}";
 
   public $is_select = false;
+  public $is_insert = true;
   public $args = array();
   private $sql;
   private $fields;
@@ -61,8 +62,7 @@ class SQLBuilder {
       $conditions[":$key"] = $value;
     }
     $this->sql = null;
-    $this->is_select = false;
-    $this->fields = implode(", ", $params);
+    $this->fields = $params;
     $this->args = $conditions;
     $this->template = self::UPDATE;
     return $this;
@@ -76,14 +76,18 @@ class SQLBuilder {
     $keys = array();
     $values = array();
     $conditions = array();
-    foreach ($args as $key => $value) {
-      $keys[] = "`$key`";
-      $conditions[] = ":$key";
-      $values[":$key"] = $value;
+    $args = $this->is_normal_array($args) ? $args : array($args);
+    foreach ($args as $arg) {
+      foreach ($arg as $key => $value) {
+        $keys[] = "`$key`";
+        $key = $this->get_value_key($key, $values);
+        $conditions[] = ":$key";
+        $values[":$key"] = $value;
+      }
     }
     $this->sql = null;
-    $this->is_select = false;
-    $this->fields = implode(", ", $keys);
+    $this->is_insert = true;
+    $this->fields = array_unique($keys);
     $this->conditions = $conditions;
     $this->args = $values;
     $this->template = self::INSERT;
@@ -96,7 +100,6 @@ class SQLBuilder {
   // --> 生成delete
   public function delete($table) {
     $this->sql = null;
-    $this->is_select = false;
     $this->template = self::DELETE;
     $this->tables = $table;
     return $this;
@@ -112,7 +115,7 @@ class SQLBuilder {
     $this->parse_args($args, '', $relation, $is_or, false);
   }
   public function search($args, $is_or = false) {
-    if (!$args || count($args) == 0) {
+    if (!$args || count(array_filter(array_values($args))) == 0) {
       return $this;
     }
     foreach ($args as $key => $value) {
@@ -160,7 +163,7 @@ class SQLBuilder {
           break;
 
         case 'fields':
-          return $this->fields;
+          return is_array($this->fields) ? implode(", ", $this->fields) : $this->fields;
           break;
 
         case 'tables':
@@ -168,6 +171,15 @@ class SQLBuilder {
           break;
 
         case 'values':
+          if ($this->is_insert) {
+            $number = count($this->fields);
+            $conditions = array_chunk($this->conditions, $number);
+            $result = array();
+            foreach ($conditions as $group) {
+              $result[] = "(" . implode(', ', $group) . ")";
+            }
+            return implode(', ', $result);
+          }
           return $this->conditions ? implode(", ", $this->conditions) : '';
           break;
 
@@ -208,14 +220,25 @@ class SQLBuilder {
     return $conditions;
   }
 
-  function get_value_key($key) {
+  function get_value_key($key, $args = null) {
     $new_key = $key;
     $index = 0;
-    while (array_key_exists(":$key", $this->args)) {
+    $args = $args ? $args : $this->args;
+    while (array_key_exists(":$key", $args)) {
       $key = "{$new_key}_{$index}";
       $index++;
     }
     return $key;
+  }
+
+  function is_normal_array($array) {
+    $keys = array_keys($array);
+    foreach ($keys as $key) {
+      if (!is_numeric($key)) {
+        return false;
+      }
+    }
+    return true;
   }
   /**
    * 用来生成sql中的条件，可以使用多次，后面的条件会覆盖前面的同名条件

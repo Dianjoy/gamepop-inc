@@ -24,6 +24,7 @@ class Game extends \gamepop\Base {
 
   const ID = 'guide_name';
 
+  static $BASE = "`guide_name`, `game_name`";
   static $ALL = "`guide_name`, `game_name`, `game_desc`, `update_time`, `icon_path`,
    `os_android`, `os_ios`, `hot`, `tags`";
   static $SLIDE = "`id`, `image`, `link`, `seq`";
@@ -43,7 +44,7 @@ class Game extends \gamepop\Base {
     if (is_array($args)) {
       $this->builder->search($args, $is_or);
     } else {
-      $this->builder->search('game_name', $args);
+      $this->builder->search(array('game_name' => $args));
     }
     return $this;
   }
