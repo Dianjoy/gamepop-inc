@@ -66,7 +66,7 @@ class Spokesman {
 
     header("Content-type: text/html; charset=UTF-8");
     $html = $mustache->render($html, $data);
-    $html = preg_replace('/src="(?!http)(\/?\w+)/', "src=\"http://r.yxpopo.com/$1", $html);
+    $html = preg_replace('/ src="(?!http)(\/?\w+)/', " src=\"http://r.yxpopo.com/$1", $html);
     $html = preg_replace('/(http:\/\/r\.yxpopo\.com\/)+/', "\$1", $html);
     echo $html;
   }
