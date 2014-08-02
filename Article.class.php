@@ -153,6 +153,40 @@ class Article extends \gamepop\Base {
     return $articles;
   }
 
+  /**
+   * 设置文章置顶
+   * @param $id 文章id
+   * @param $is_top 是否置顶
+   */
+  public function set_article_top($id, $is_top) {
+    $pub_date = $this->select('pub_date')
+      ->where(array('id' => $id))
+      ->fetch(PDO::FETCH_COLUMN);
+    // 以上线时间和当前时间较晚者为准
+    $now = date('Y-m-d H:i:s');
+    $start_date = $pub_date > $now ? $pub_date : $now;
+    $end_date = date('Y-m-d H:i:s', strtotime($start_date) + 86400 * 7);
+    if ($is_top) {
+      $array = array(
+        'aid' => $id,
+        'start_time' => $start_date,
+        'end_time' => $end_date,
+        'by' => $_SESSION['id'],
+      );
+      $result = $this->insert($array, Article::TOP)
+        ->execute()
+        ->getResult();
+    } else {
+      $result = $this->update(array('status' => 1), Article::TOP)
+        ->where(array('aid' => $id))
+        ->where(array('end_time' => $now), '', \gamepop\Base::R_MORE_EQUAL)
+        ->execute();
+    }
+    $attr = array('top' => (int)$is_top);
+    Spokesman::judge($result, '修改成功', '修改失败', $attr);
+    exit();
+  }
+
   protected function getTable($fields) {
     if (is_string($fields)) {
       if (strpos($fields, self::$ALL) !== false || strpos($fields, self::$DETAIL) !== false) {
