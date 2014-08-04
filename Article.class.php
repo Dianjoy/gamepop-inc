@@ -187,6 +187,37 @@ class Article extends \gamepop\Base {
     exit();
   }
 
+  public function update_category($id, $category) {
+    $new = explode('|', $category);
+    $this->delete(Article::ARTICLE_CATEGORY)
+      ->where(array('aid' => $id))
+      ->execute();
+    $categories = array();
+    foreach ($new as $category) {
+      $categories[] = array(
+        'aid' => $id,
+        'cid' => $category,
+      );
+    }
+    $check = $this->insert($categories, Article::ARTICLE_CATEGORY)
+      ->execute()
+      ->getResult();
+
+    if (!$check) {
+      Spokesman::say(array(
+        'code' => 1,
+        'msg' => '修改分类失败',
+      ));
+    }
+
+    if (is_array($categories)) {
+      $categories = $this->select(Article::$ALL_CATEGORY)
+        ->where(array('id' => $new), '', \gamepop\Base::R_IN)
+        ->fetchAll(PDO::FETCH_ASSOC);
+    }
+    return $categories;
+  }
+
   protected function getTable($fields) {
     if (is_string($fields)) {
       if (strpos($fields, self::$ALL) !== false || strpos($fields, self::$DETAIL) !== false) {
