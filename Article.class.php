@@ -23,7 +23,7 @@ class Article extends \gamepop\Base {
     `topic`, `author`, `t_article`.`icon_path`, `pub_date`, `src_url`, `seq`, `remark`,
     `update_time`, `update_editor`, `is_top`, `is_index`, `t_article`.`status`";
   static $TOP = "`aid`, `t_article_top`.`id`, `topic`, `start_time`, `end_time`,
-   `t_article_top`.`seq`, `icon_path`";
+   `t_article_top`.`seq`, `icon_path`, `pub_date`, `category`";
   static $DETAIL = "`guide_name`, `category`, `label`, `source`,
     `topic`, `author`, `icon_path`, `content`, `remark`, `pub_date`, `src_url`,
      `seq`, `update_time`, `update_editor`, `t_article`.`status`, `is_top`";
