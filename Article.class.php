@@ -19,16 +19,15 @@ class Article extends \gamepop\Base {
   const DRAFT = 2;
   const FETCHED = 3;
 
-  static $ALL = "`t_article`.`id`, `guide_name`, `category`, `label`, `source`,
-    `topic`, `author`, `t_article`.`icon_path`, `pub_date`, `src_url`, `seq`, `remark`,
-    `update_time`, `update_editor`, `is_top`, `is_index`, `t_article`.`status`";
-  static $TOP = "`aid`, `t_article_top`.`id`, `topic`, `start_time`, `end_time`,
-   `t_article_top`.`seq`, `icon_path`, `pub_date`, `category`";
-  static $DETAIL = "`guide_name`, `category`, `label`, `source`,
-    `topic`, `author`, `icon_path`, `content`, `remark`, `pub_date`, `src_url`,
-     `seq`, `update_time`, `update_editor`, `t_article`.`status`, `is_top`";
+  static $ALL = "`t_article`.`id`, `guide_name`, `source`, `topic`, `author`, `icon_path`,
+    `pub_date`, `src_url`, `seq`, `remark`, `update_time`, `update_editor`,
+     `is_top`, `is_index`, `t_article`.`status`";
+  static $DETAIL = "`guide_name`, `source`, `topic`, `author`, `icon_path`,
+    `content`, `remark`, `pub_date`, `src_url`, `seq`, `status`";
   static $ALL_CATEGORY = "`t_article_category`.`id`, `cate`, `label`";
   static $CATEGORY = "`aid`, `cid`, `label`";
+  static $TOP = "`aid`, `t_article_top`.`id`, `topic`, `start_time`, `end_time`,
+    `t_article_top`.`seq`, `icon_path`, `pub_date`";
 
   public function __construct($need_write = false, $need_cache = true, $is_debug = false) {
     parent::__construct($need_write, $need_cache, $is_debug);
@@ -81,7 +80,20 @@ class Article extends \gamepop\Base {
       ->fetchALL(PDO::FETCH_ASSOC);
   }
 
-  public function fetch_meta_data($articles) {
+  /**
+   * 取给定文章的附加信息
+   * @param $articles
+   * @param null $options
+   * @return mixed
+   */
+  public function fetch_meta_data($articles, $options = null) {
+    $default = array(
+      'category' => true,
+      'author' => true,
+      'game' => true,
+      'top' => true,
+    );
+    $options = array_merge($default, (array)$options);
     // 取出各种数据
     $ids = array();
     $editors = array();
@@ -97,22 +109,23 @@ class Article extends \gamepop\Base {
     $editors = array_unique($editors);
 
     // 读取分类
-    $category = $this->select(Article::$CATEGORY)
-      ->where(array('aid' => $ids), '', gamepop\Base::R_IN)
-      ->fetchAll(PDO::FETCH_ASSOC);
-    $cates = array();
-    foreach ($category as $item) {
-      $item['id'] = $item['cid'];
-      if (isset($cates[$item['aid']])) {
-        $cates[$item['aid']][] = $item;
-      } else {
-        $cates[$item['aid']] = array($item);
+    if ($options['category']) {
+      $category = $this->select(Article::$CATEGORY)
+        ->where(array('aid' => $ids), '', gamepop\Base::R_IN)
+        ->fetchAll(PDO::FETCH_ASSOC);
+      $cates = array();
+      foreach ($category as $item) {
+        $item['id'] = $item['cid'];
+        if (isset($cates[$item['aid']])) {
+          $cates[$item['aid']][] = $item;
+        } else {
+          $cates[$item['aid']] = array($item);
+        }
       }
     }
 
-
     // 读取作者，用作者名取代标记
-    if (count($editors)) {
+    if ($options['author'] && count($editors)) {
       require_once "../../inc/Admin.class.php";
       $admin = new Admin();
       $editors = $admin->select(Admin::$BASE)
@@ -124,7 +137,7 @@ class Article extends \gamepop\Base {
     }
 
     // 读取关联游戏
-    if (count($guide_names)) {
+    if ($options['game'] && count($guide_names)) {
       require_once "../../inc/Game.class.php";
       $game = new Game();
       $games = $game->select(Game::$ALL)
@@ -133,12 +146,14 @@ class Article extends \gamepop\Base {
     }
 
     // 读取置顶状态
-    $now = date('Y-m-d H:i:s');
-    $top = $this->select(Article::$TOP)
-      ->where(array('aid' => $ids), '', \gamepop\Base::R_IN)
-      ->where(array('status' => 0), Article::TOP)
-      ->where(array('end_time' => $now), '', \gamepop\Base::R_MORE_EQUAL)
-      ->fetchAll(PDO::FETCH_ASSOC | PDO::FETCH_UNIQUE);
+    if ($options['top']) {
+      $now = date('Y-m-d H:i:s');
+      $top = $this->select(Article::$TOP)
+        ->where(array('aid' => $ids), '', \gamepop\Base::R_IN)
+        ->where(array('status' => 0), Article::TOP)
+        ->where(array('end_time' => $now), '', \gamepop\Base::R_MORE_EQUAL)
+        ->fetchAll(PDO::FETCH_ASSOC | PDO::FETCH_UNIQUE);
+    }
 
     // 补全数据
     foreach ($articles as $key => $item) {
@@ -220,9 +235,6 @@ class Article extends \gamepop\Base {
 
   protected function getTable($fields) {
     if (is_string($fields)) {
-      if (strpos($fields, self::$ALL) !== false || strpos($fields, self::$DETAIL) !== false) {
-        return self::TABLE . " LEFT JOIN " . self::CATEGORY . " ON " . self::TABLE . ".`category`=" . self::CATEGORY . ".`id`";
-      }
       if ($fields === self::$ALL_CATEGORY) {
         return self::CATEGORY;
       }
