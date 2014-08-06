@@ -27,7 +27,7 @@ class Article extends \gamepop\Base {
   static $ALL_CATEGORY = "`t_article_category`.`id`, `cate`, `label`, `parent`";
   static $CATEGORY = "`aid`, `cid`, `label`";
   static $TOP = "`aid`, `t_article_top`.`id`, `topic`, `start_time`, `end_time`,
-    `t_article_top`.`seq`, `icon_path`, `pub_date`";
+    `t_article_top`.`seq`, `icon_path`, `pub_date`, `source`, `author`";
 
   public function __construct($need_write = false, $need_cache = true, $is_debug = false) {
     parent::__construct($need_write, $need_cache, $is_debug);
@@ -93,20 +93,24 @@ class Article extends \gamepop\Base {
       'game' => true,
       'top' => true,
     );
-    $options = array_merge($default, (array)$options);
+    $options = $options ? $options : $default;
     // 取出各种数据
     $ids = array();
+    $author = array();
     $editors = array();
     $guide_names = array();
     foreach ($articles as $item) {
-      $ids[] = $item['id'];
+      $ids[] = isset($item['aid']) ? $item['aid'] : $item['id'];
       $guide_names[] = $item['guide_name'];
       if ($item['update_editor']) {
         $editors[] = $item['update_editor'];
       }
+      if (!$item['source'] && is_numeric($item['author'])) {
+        $author[] = $item['author'];
+      }
     }
     $guide_names = array_unique($guide_names);
-    $editors = array_unique($editors);
+    $editors = array_unique(array_merge($editors, $author));
 
     // 读取分类
     if ($options['category']) {
@@ -126,19 +130,24 @@ class Article extends \gamepop\Base {
 
     // 读取作者，用作者名取代标记
     if ($options['author'] && count($editors)) {
-      require_once "../../inc/Admin.class.php";
+      require_once "Admin.class.php";
       $admin = new Admin();
       $editors = $admin->select(Admin::$BASE)
         ->where(array('id' => $editors), '', \gamepop\Base::R_IN)
-        ->fetchAll(PDO::FETCH_COLUMN | PDO::FETCH_UNIQUE);
+        ->fetchAll(PDO::FETCH_ASSOC | PDO::FETCH_UNIQUE);
       foreach ($articles as $key => $article) {
-        $articles[$key]['update_editor'] = $editors[$article['update_editor']];
+        if ($item['update_editor']) {
+          $articles[$key]['update_editor'] = $editors[$article['update_editor']];
+        }
+        if (!$article['source'] && is_numeric($article['author'])) {
+          $articles[$key]['author'] = $editors[$article['author']]['nickname'];
+        }
       }
     }
 
     // 读取关联游戏
     if ($options['game'] && count($guide_names)) {
-      require_once "../../inc/Game.class.php";
+      require_once "Game.class.php";
       $game = new Game();
       $games = $game->select(Game::$ALL)
         ->where(array('guide_name' => $guide_names), '', \gamepop\Base::R_IN)
@@ -156,12 +165,16 @@ class Article extends \gamepop\Base {
     }
 
     // 补全数据
+    $unique_category = $options['category_type'] == 'unique';
+    $is_pub_date_short = $options['pub_date_type'] == 'short';
     foreach ($articles as $key => $item) {
-      $item['category'] = (array)$cates[$item['id']];
+      $id = isset($item['aid']) ? $item['aid'] : $item['id'];
+      $item['category'] = $unique_category ? (int)$cates[$id][0]['id'] : (array)$cates[$id];
       $item['game_name'] = $games[$item['guide_name']]['game_name'];
       $item['is_top'] = (int)$item['is_top'];
       $item['status'] = (int)$item['status'];
-      $item['top'] = (int)isset($top[$item['id']]);
+      $item['pub_date'] = $is_pub_date_short ? substr($item['pub_date'], 0, 10) : $item['pub_date'];
+      $item['top'] = (int)isset($top[$id]);
       $articles[$key] = $item;
     }
 

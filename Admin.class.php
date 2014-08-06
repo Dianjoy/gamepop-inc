@@ -20,8 +20,8 @@ class Admin extends \gamepop\Base {
   const EDITOR = 2;
   const OUTSIDER = 100;
 
-  static $ALL = "`id`, `fullname`, `role`";
-  static $BASE = "`id`, `fullname`";
+  static $ALL = "`id`, `fullname`, `nickname`, `role`";
+  static $BASE = "`id`, `fullname`, `nickname`";
 
   static function is_outsider() {
     return (int)$_SESSION['role'] === self::OUTSIDER;
