@@ -12,7 +12,7 @@ class App extends \gamepop\Base {
 
   const NORMAL = 0;
 
-  static $HOMEPAGE = '`id`, `guide_name`, `big_pic`, `logo`, `logo_width`,
+  static $HOMEPAGE = '`id`, `guide_name`, `link`, `big_pic`, `logo`, `logo_width`,
     `create_time`, `online_time`, `seq`, `status`';
 
   protected function getTable($field = '') {
