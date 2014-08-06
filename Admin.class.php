@@ -93,12 +93,12 @@ class Admin extends \gamepop\Base {
     return parent::where($args, $table, $relation);
   }
 
-  public function add($username, $fullname, $password, $role, $qq = '') {
+  public function add($username, $fullname, $nickname, $password, $role, $qq = '') {
     $this->init_write();
     $password = $this->encrypt($username, $password);
     $sql = "INSERT INTO " . self::TABLE . "
-            (`user`, `fullname`, `password`, `role`, `qq`)
-            VALUES ('$username', '$fullname', '$password', $role, '$qq')";
+            (`user`, `fullname`, `nickname`, `password`, `role`, `qq`)
+            VALUES ('$username', '$fullname', '$nickname', '$password', $role, '$qq')";
     return self::$WRITE->exec($sql);
   }
 
@@ -111,7 +111,7 @@ class Admin extends \gamepop\Base {
   }
 
   public function get_live_admins() {
-    $sql = "SELECT t.`id`, `user`, `fullname`, `qq`, `role`, MAX(`login_time`) AS last_login
+    $sql = "SELECT t.`id`, `user`, `fullname`, `nickname`, `qq`, `role`, MAX(`login_time`) AS last_login
             FROM " . self::TABLE . " t LEFT JOIN " . self::LOG . " l ON t.`id`=l.`userid`
             WHERE `status`=" . self::NORMAL . "
             GROUP BY t.`id`";
