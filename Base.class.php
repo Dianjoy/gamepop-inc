@@ -131,7 +131,7 @@ class Base {
     return $this;
   }
   public function limit($start, $length = 0) {
-    if ($start > 0) {
+    if ($length > 0 || $start > 0) {
       $this->builder->limit($start, $length);
     }
     return $this;
