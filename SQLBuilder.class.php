@@ -15,7 +15,8 @@ class SQLBuilder {
     {{havings}}";
   const UPDATE = "UPDATE {{tables}}
     SET {{fields}}
-    WHERE {{conditions}}";
+    WHERE {{conditions}}
+    ";
   const INSERT = "INSERT INTO {{tables}}
     ({{fields}})
     VALUES {{values}}";
@@ -139,7 +140,7 @@ class SQLBuilder {
     return $this;
   }
   public function limit($start, $length) {
-    $this->limit = "LIMIT $start,$length";
+    $this->limit = $length === 0 ? "LIMIT $start" : "LIMIT $start,$length";
   }
   public function output() {
     // 如果update和delete欠缺条件，就直接抛出异常

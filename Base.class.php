@@ -130,8 +130,8 @@ class Base {
     $this->builder->order($key, $order);
     return $this;
   }
-  public function limit($start, $length) {
-    if ($length > 0) {
+  public function limit($start, $length = 0) {
+    if ($start > 0) {
       $this->builder->limit($start, $length);
     }
     return $this;
