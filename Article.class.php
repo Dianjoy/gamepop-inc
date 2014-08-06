@@ -24,7 +24,7 @@ class Article extends \gamepop\Base {
      `is_top`, `is_index`, `t_article`.`status`";
   static $DETAIL = "`guide_name`, `source`, `topic`, `author`, `icon_path`,
     `content`, `remark`, `pub_date`, `src_url`, `seq`, `status`";
-  static $ALL_CATEGORY = "`t_article_category`.`id`, `cate`, `label`";
+  static $ALL_CATEGORY = "`t_article_category`.`id`, `cate`, `label`, `parent`";
   static $CATEGORY = "`aid`, `cid`, `label`";
   static $TOP = "`aid`, `t_article_top`.`id`, `topic`, `start_time`, `end_time`,
     `t_article_top`.`seq`, `icon_path`, `pub_date`";
