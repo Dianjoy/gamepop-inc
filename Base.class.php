@@ -127,7 +127,13 @@ class Base {
     return $this;
   }
   public function order($key, $order = 'DESC') {
-    $this->builder->order($key, $order);
+    if (is_array($key)) {
+      foreach ($key as $item) {
+        $this->builder->order($item, $order);
+      }
+    } else {
+      $this->builder->order($key, $order);
+    }
     return $this;
   }
   public function limit($start, $length = 0) {
