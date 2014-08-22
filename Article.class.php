@@ -20,10 +20,9 @@ class Article extends \gamepop\Base {
   const FETCHED = 3;
 
   static $ALL = "`t_article`.`id`, `guide_name`, `source`, `topic`, `author`, `icon_path`,
-    `pub_date`, `src_url`, `seq`, `remark`, `update_time`, `update_editor`,
-     `is_top`, `is_index`, `t_article`.`status`";
+    `pub_date`, `src_url`, `remark`, `update_time`, `update_editor`, `t_article`.`status`";
   static $DETAIL = "`guide_name`, `source`, `topic`, `author`, `icon_path`,
-    `content`, `remark`, `pub_date`, `src_url`, `seq`, `status`";
+    `content`, `remark`, `pub_date`, `src_url`, `status`";
   static $ALL_CATEGORY = "`t_article_category`.`id`, `cate`, `label`, `parent`";
   static $CATEGORY = "`aid`, `cid`, `label`";
   static $TOP = "`aid`, `t_article_top`.`id`, `topic`, `start_time`, `end_time`,
@@ -213,6 +212,36 @@ class Article extends \gamepop\Base {
     $attr = array('top' => (int)$is_top);
     Spokesman::judge($result, '修改成功', '修改失败', $attr);
     exit();
+  }
+
+  /**
+   * 取置顶文章
+   * @param $guide_name
+   * @param $category
+   * @return array
+   */
+  public function get_top_article($guide_name, $category, $order = 'start_time', $limit = 10) {
+    $guide_name = is_array($guide_name) ? $guide_name : array($guide_name);
+    $category = is_array($category) ? $category : array($category);
+    $now = date('Y-m-d');
+    $articles = $this->select(self::$ALL)
+      ->join(self::ARTICLE_CATEGORY, 'id', 'aid')
+      ->join(self::TOP, 'id', 'aid')
+      ->where(array('guide_name' => $guide_name), '', \gamepop\Base::R_IN)
+      ->where(array('cid' => $category), '', \gamepop\Base::R_IN)
+      ->where(array('pub_date' => $now), '', \gamepop\Base::R_LESS_EQUAL)
+      ->where(array('start_time' => $now), '', \gamepop\Base::R_LESS_EQUAL)
+      ->where(array('end_time' => $now), '', \gamepop\Base::R_MORE_EQUAL)
+      ->where(array('status' => 0), self::TABLE)
+      ->where(array('status' => 0), self::TOP)
+      ->order($order)
+      ->limit($limit)
+      ->fetchAll(PDO::FETCH_ASSOC);
+    $articles = $this->fetch_meta_data($articles, array(
+      'category' => true,
+      'category_type' => 'unique',
+    ));
+    return $articles;
   }
 
   public function update_category($id, $category) {

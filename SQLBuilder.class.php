@@ -29,6 +29,7 @@ class SQLBuilder {
   private $sql;
   private $fields;
   private $tables;
+  private $joins;
   private $conditions = array();
   private $havings = array();
   private $orders = array();
@@ -106,7 +107,13 @@ class SQLBuilder {
     return $this;
   }
   public function join($table, $from, $to, $dir) {
-    $this->tables = $this->tables . " $dir JOIN $table ON " . $this->tables . ".`$from` = $table.`$to`";
+    $this->joins = is_array($this->joins) ? $this->joins : array();
+    $this->joins[] = array(
+      'table' => $table,
+      'from' => $from,
+      'to' => $to,
+      'dir' => $dir,
+    );
     return $this;
   }
   public function where($args, $table = '', $relation = '=', $is_or = false) {
@@ -168,6 +175,13 @@ class SQLBuilder {
           break;
 
         case 'tables':
+          if (is_array($this->joins)) {
+            $tables = array();
+            foreach ($this->joins as $table) {
+              $tables[] = $table['dir'] . " JOIN " . $table['table'] . " ON " . $this->tables . ".`" . $table['from'] . "`=`" . $table['table'] . "`.`" . $table['to'] . "`";
+            }
+            $this->tables .= ' ' . implode(' ', $tables);
+          }
           return $this->tables;
           break;
 
@@ -262,6 +276,7 @@ class SQLBuilder {
       }
       $value_key = $this->get_value_key($this->strip($key));
       if (is_array($value)) {
+        $value = array_filter($value); // 数组多用于in，应该不存在in('')这种情况
         if (count($value) == 0) {
           continue;
         }

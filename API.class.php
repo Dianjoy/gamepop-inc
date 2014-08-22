@@ -8,8 +8,10 @@
 
 class API {
   public function __construct($auth, $handlers) {
-    define('OPTIONS', $auth);
-    require_once '../../inc/session.php';
+    if ($auth) {
+      define('OPTIONS', $auth);
+      require_once '../../inc/session.php';
+    }
 
     $args = $_REQUEST;
     // 对backbone开放的接口，传进来的数据多是json对象
@@ -17,8 +19,10 @@ class API {
     if ($request) {
       $attr = json_decode($request, true);
       // 去掉链接中的http://r.yxpopo.com/
-      foreach ($attr as $key => $value) {
-        $attr[$key] = str_replace('http://r.yxpopo.com/', '', $value);
+      if (is_array($attr)) {
+        foreach ($attr as $key => $value) {
+          $attr[$key] = str_replace('http://r.yxpopo.com/', '', $value);
+        }
       }
     }
 
@@ -50,6 +54,10 @@ class API {
           header("HTTP/1.1 406 Not Acceptable");
         }
         $handlers['create']($args, $attr);
+        break;
+
+      case 'OPTIONS':
+        Header("accept: ok");
         break;
 
       default:

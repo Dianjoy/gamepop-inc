@@ -24,7 +24,7 @@ class Game extends \gamepop\Base {
 
   const ID = 'guide_name';
 
-  static $BASE = "`guide_name`, `game_name`";
+  static $BASE = "`guide_name`, `game_name`, `icon_path`";
   static $ALL = "`guide_name`, `game_name`, `game_desc`, `update_time`, `icon_path`,
    `os_android`, `os_ios`, `hot`, `tags`";
   static $SLIDE = "`id`, `image`, `link`, `seq`";
