@@ -196,6 +196,7 @@ class Article extends \gamepop\Base {
     if ($is_top) {
       $array = array(
         'aid' => $id,
+        'create_time' => $now,
         'start_time' => $start_date,
         'end_time' => $end_date,
         'by' => $_SESSION['id'],
