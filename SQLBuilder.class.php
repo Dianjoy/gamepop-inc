@@ -276,7 +276,9 @@ class SQLBuilder {
       }
       $value_key = $this->get_value_key($this->strip($key));
       if (is_array($value)) {
-        $value = array_filter($value); // 数组多用于in，应该不存在in('')这种情况
+        $value = array_filter($value, function ($value) {
+          return $value || $value === 0; // `0`是可接受的值
+        }); // 数组多用于in，应该不存在in('')这种情况
         if (count($value) == 0) {
           continue;
         }
