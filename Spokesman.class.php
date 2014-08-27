@@ -66,8 +66,8 @@ class Spokesman {
 
     header("Content-type: text/html; charset=UTF-8");
     $html = $mustache->render($html, $data);
-    $html = preg_replace('/ src="(?!http)(\/?\w+)/', " src=\"http://r.yxpopo.com/$1", $html);
-    $html = preg_replace('/(http:\/\/r\.yxpopo\.com\/)+/', "\$1", $html);
+    $html = preg_replace('/ src="(?!http)(\/?\w+)/', " src=\"http://fast-cdn.dianjoy.com/gamepop/$1", $html);
+    $html = preg_replace('/(http:\/\/fast-cdn\.dianjoy\.com\/gamepop\/)+/', "\$1", $html);
     echo $html;
   }
 
@@ -81,7 +81,7 @@ class Spokesman {
     return $item;
   }
   private static function addDomain($url) {
-    $prefix = 'http://r.yxpopo.com/';
+    $prefix = 'http://fast-cdn.dianjoy.com/gamepop/';
     $url = preg_replace('/(\.\/)?upload\//', $prefix, $url);
     return strpos($url, $prefix) === false ? $prefix . $url : $url;
   }
