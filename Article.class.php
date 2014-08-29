@@ -25,6 +25,7 @@ class Article extends \gamepop\Base {
     `content`, `remark`, `pub_date`, `src_url`, `status`";
   static $ALL_CATEGORY = "`t_article_category`.`id`, `cate`, `label`, `parent`";
   static $CATEGORY = "`aid`, `cid`, `label`";
+  static $CID = "`cid`";
   static $TOP = "`aid`, `t_article_top`.`id`, `topic`, `start_time`, `end_time`,
     `t_article_top`.`seq`, `icon_path`, `pub_date`, `source`, `author`";
 
@@ -289,6 +290,9 @@ class Article extends \gamepop\Base {
       }
       if ($fields === self::$TOP) {
         return self::TOP . " LEFT JOIN " . self::TABLE . " ON " . self::TOP . ".`aid`=" . self::TABLE . ".`id`";
+      }
+      if ($fields === self::$CID) {
+        return self::ARTICLE_CATEGORY;
       }
     }
     if (is_array($fields)) {
