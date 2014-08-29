@@ -87,6 +87,9 @@ class Article extends \gamepop\Base {
    * @return mixed
    */
   public function fetch_meta_data($articles, $options = null) {
+    if (count($articles) == 0) {
+      return;
+    }
     $default = array(
       'category' => true,
       'author' => true,
@@ -225,7 +228,7 @@ class Article extends \gamepop\Base {
   public function get_top_article($guide_name, $category, $order = 'start_time', $limit = 10) {
     $guide_name = is_array($guide_name) ? $guide_name : array($guide_name);
     $category = is_array($category) ? $category : array($category);
-    $now = date('Y-m-d');
+    $now = date('Y-m-d H:i:s');
     $articles = $this->select(self::$ALL)
       ->join(self::ARTICLE_CATEGORY, 'id', 'aid')
       ->join(self::TOP, 'id', 'aid')
