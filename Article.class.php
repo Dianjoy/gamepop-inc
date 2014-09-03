@@ -18,6 +18,8 @@ class Article extends \gamepop\Base {
   const DELETED = 1;
   const DRAFT = 2;
   const FETCHED = 3;
+  const UNIQUE_CATEGORY = 'unique';
+  const SHORT_PUB_DATE = 'short';
 
   static $ALL = "`t_article`.`id`, `guide_name`, `source`, `topic`, `author`, `icon_path`,
     `pub_date`, `src_url`, `remark`, `update_time`, `update_editor`, `t_article`.`status`";
@@ -168,8 +170,8 @@ class Article extends \gamepop\Base {
     }
 
     // 补全数据
-    $unique_category = $options['category_type'] == 'unique';
-    $is_pub_date_short = $options['pub_date_type'] == 'short';
+    $unique_category = $options['category_type'] == self::UNIQUE_CATEGORY;
+    $is_pub_date_short = $options['pub_date_type'] == self::SHORT_PUB_DATE;
     foreach ($articles as $key => $item) {
       $id = isset($item['aid']) ? $item['aid'] : $item['id'];
       $item['category'] = $unique_category ? (int)$cates[$id][0]['id'] : (array)$cates[$id];
