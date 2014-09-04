@@ -228,7 +228,7 @@ class SQLBuilder {
    */
   function get_condition_string($conditions) {
     $is_or = $conditions[0];
-    $connect = $is_or ? ' OR ' : ' AND ';
+    $connect = $is_or ? 'OR' : 'AND';
     $conditions = $conditions[1];
     $conditions = is_array($conditions) ? implode(" $connect ", $conditions) : $conditions;
     $conditions = $is_or ? "($conditions)" : $conditions;

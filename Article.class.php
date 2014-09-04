@@ -174,9 +174,12 @@ class Article extends \gamepop\Base {
     $is_pub_date_short = $options['pub_date_type'] == self::SHORT_PUB_DATE;
     foreach ($articles as $key => $item) {
       $id = isset($item['aid']) ? $item['aid'] : $item['id'];
-      $item['category'] = $unique_category ? (int)$cates[$id][0]['id'] : (array)$cates[$id];
-      $item['game_name'] = $games[$item['guide_name']]['game_name'];
-      $item['is_top'] = (int)$item['is_top'];
+      if ($cates) {
+        $item['category'] = $unique_category ? (int)$cates[$id][0]['id'] : (array)$cates[$id];
+      }
+      if ($games) {
+        $item['game_name'] = $games[$item['guide_name']]['game_name'];
+      }
       $item['status'] = (int)$item['status'];
       $item['pub_date'] = $is_pub_date_short ? substr($item['pub_date'], 0, 10) : $item['pub_date'];
       $item['top'] = (int)isset($top[$id]);
