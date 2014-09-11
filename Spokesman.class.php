@@ -65,9 +65,10 @@ class Spokesman {
     $html = file_get_contents($tpl);
 
     header("Content-type: text/html; charset=UTF-8");
+    if (isset($data['content'])) {
+      $data['content'] = preg_replace('/ src="(?!http)(\/?\w+)/', " src=\"img/image.gif\" class=\"ph\" data-src=\"http://fast-cdn.dianjoy.com/gamepop/$1", $data['content']);
+    }
     $html = $mustache->render($html, $data);
-    $html = preg_replace('/ src="(?!http)(\/?\w+)/', " src=\"http://r.yxpopo.com/$1", $html);
-    $html = preg_replace('/(http:\/\/r\.yxpopo\.com\/)+/', "\$1", $html);
     echo $html;
   }
 
