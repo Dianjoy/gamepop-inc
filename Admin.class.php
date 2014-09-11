@@ -11,6 +11,7 @@ class Admin extends \gamepop\Base {
   const TABLE = '`t_admin`';
   const LOG = '`t_admin_log`';
   const OUTSIDER_LOG = '`t_outsider_op_log`';
+  const GAME_MAP = '`o_game_user`';
 
   const NORMAL = 0;
   const DELETE = 1;
@@ -34,6 +35,13 @@ class Admin extends \gamepop\Base {
             (`user_id`, `time`, `operation`, `label`, `article_id`)
             VALUES ($user_id, '$now', '$operation', '$label', $article_id)";
     self::$WRITE->exec($sql);
+  }
+  static function has_this_game($guide_name) {
+    $user_id = $_SESSION['id'];
+    $sql = "SELECT 'X'
+            FROM " . self::GAME_MAP . "
+            WHERE `user_id`='$user_id' AND `guide_name`='$guide_name'";
+    return self::$READ->query($sql)->fetchColumn();
   }
 
   public static $ROLES = array(
@@ -72,7 +80,7 @@ class Admin extends \gamepop\Base {
   );
 
   public function __construct($need_write = false) {
-    parent::__construct($need_write, false);
+    parent::__construct($need_write, false, false);
   }
 
   protected function getTable($fields) {
