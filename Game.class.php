@@ -16,6 +16,7 @@ class Game extends \gamepop\Base {
   const OUTSIDE = '`o_game_user`';
   const TAGS = '`m_game_tags`';
   const PACK = '`m_pack_guide`';
+  const POSTER = '`t_game_poster`';
 
   // t_game.status
   const NORMAL = 0;
@@ -33,6 +34,7 @@ class Game extends \gamepop\Base {
   static $LATEST = "`t_game`.`guide_name`, `game_name`, `game_desc`, `t_game`.`icon_path`,
    `os_android`, `os_ios`";
   static $TAGS = "`id`, `tag`";
+  static $POSTER = "`t_game_poster`.`id`, `t_game`.`guide_name`, `game_name`, `icon_path`, `poster`";
 
   static $ORDER_HOT = "hot";
 
@@ -48,6 +50,39 @@ class Game extends \gamepop\Base {
     }
     return $this;
   }
+
+  public function get_hot_games($keyword, $start, $pagesize) {
+    require_once "Admin.class.php";
+
+    $number = $this->select($this->count())
+      ->join(self::OUTSIDE, self::ID, self::ID)
+      ->join(self::POSTER, self::ID, self::ID)
+      ->where(array(
+        'user_id' => Admin::$VIP,
+        'status' => 0,
+      ))
+      ->search($keyword)
+      ->fetch(PDO::FETCH_COLUMN);
+
+    $games = $this->select(Game::$POSTER)
+      ->join(self::OUTSIDE, self::ID, self::ID)
+      ->join(self::POSTER, self::ID, self::ID)
+      ->where(array(
+        'user_id' => Admin::$VIP,
+        'status' => 0,
+      ))
+      ->search($keyword)
+      ->order('hot')
+      ->limit($start, $pagesize)
+      ->fetchAll(PDO::FETCH_ASSOC);
+
+    return array(
+      'total' => $number,
+      'list' => $games,
+    );
+  }
+
+
   protected function getTable($fields) {
     if ($fields === self::$ALL) {
       return self::TABLE;
