@@ -12,9 +12,20 @@ while ($pos_right) {
 
 if (result_without_parenthese($string) == 'false') {
   require(dirname(__FILE__) . '/Template.class.php');
-  $tpl = new Template(dirname(__FILE__) . '/../web/template/permission-error.html');
+  // 根据HTTP头Accept的内容判断返回何种错误
+  if (strpos($_SERVER['HTTP_ACCEPT'], 'application/json') === false) { // 普通页面
+    header('Content-type: text/html;charset=UTF-8');
+    $tpl = new Template(dirname(__FILE__) . '/../web/template/permission-error.html');
+    $html = $tpl->render();
+  } else { // Ajax
+    header('Content-type: application/json;charset=UTF-8');
+    $html = json_encode(array(
+      'code' => 100,
+      'msg' => '您需要登录已失效，需要重新登录',
+    ));
+  }
   header("HTTP/1.1 401 Unauthorized");
-  exit($tpl->render());
+  exit($html);
 }
 
 function result_without_parenthese($str) {
