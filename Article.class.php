@@ -176,6 +176,8 @@ class Article extends \gamepop\Base {
       $id = isset($item['aid']) ? $item['aid'] : $item['id'];
       if ($cates) {
         $item['category'] = $unique_category ? (int)$cates[$id][0]['id'] : (array)$cates[$id];
+      } else {
+        $item['category'] = $unique_category ? 0 : null;
       }
       if ($games) {
         $item['game_name'] = $games[$item['guide_name']]['game_name'];
